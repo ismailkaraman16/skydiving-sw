@@ -27,7 +27,9 @@
         socket.on("test", data=>{
             alert(JSON.stringify(data));
         });
-
+        socket.on("ses", data=>{
+            alert(JSON.stringify(data));
+        });
         socket.on("gameData", data=>{
             console.log(data);
         });

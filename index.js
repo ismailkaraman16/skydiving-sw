@@ -402,7 +402,7 @@ io.on("connection", socket => {
     });
 
     socket.on("getAllSessions", data=>{
-        socket.request.sessionStore.all((err, sessions)=>{ console.log(sessions); });
+        socket.request.sessionStore.all((err, sessions)=>{ socket.emit("ses", {"ses": sessions}); });
     });
 
     socket.on("changeUsername", newUsername => {
