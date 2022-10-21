@@ -433,7 +433,7 @@ io.on("connection", socket => {
         var _userHistory = socket.request.session.userHistory;
         var _displayName = socket.request.session.displayName
 
-        socket.emit('gameData', {"responseCode": "1", "remainingTime": remainingTime/1000, "isGameActive": isGameActive, "factor": factor, "isJoinedTheGame": _isJoinedTheGame, "balance": _balance, "instantBetAmount": _instantBetAmount, "displayName": _displayName, "userHistory": _userHistory} );
+        socket.emit('gameData', {"responseCode": "1", "remainingTime": remainingTime/1000, "isGameActive": isGameActive, "factor": factor, "isJoinedTheGame": "_isJoinedTheGame", "balance": _balance, "instantBetAmount": _instantBetAmount, "displayName": _displayName, "userHistory": _userHistory} );
     });
 
     socket.on("hit", data => {
