@@ -426,13 +426,14 @@ io.on("connection", socket => {
             remainingTime = new Date(thisYear, thisMonth, thisDay, thisHour, thisMinute, 00) - new Date();
         }
 
+        socket.request.session.reload(err=>{return socket.emit('joinGame', {"status": "succes"} );});
         var _isJoinedTheGame = socket.request.session.isJoinedTheGame;
         var _balance = socket.request.session.balance; 
         var _instantBetAmount = socket.request.session.instantBetAmount;
         var _userHistory = socket.request.session.userHistory;
         var _displayName = socket.request.session.displayName
 
-        socket.emit('gameData', {"responseCode": "1", "remainingTime": remainingTime/1000, "isGameActive": isGameActive, "factor": factor , "isJoinedTheGame": _isJoinedTheGame, "balance": _balance, "instantBetAmount": _instantBetAmount, "displayName": _displayName, "userHistory": _userHistory} );
+        socket.emit('gameData', {"responseCode": "1", "remainingTime": remainingTime/1000, "isGameActive": isGameActive, "factor": factor, "isJoinedTheGame": _isJoinedTheGame, "balance": _balance, "instantBetAmount": _instantBetAmount, "displayName": _displayName, "userHistory": _userHistory} );
     });
 
     socket.on("hit", data => {
