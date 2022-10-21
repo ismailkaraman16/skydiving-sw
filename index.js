@@ -411,7 +411,6 @@ io.on("connection", socket => {
     })
 
     socket.on("gameData", async data => {
-
         var remainingTime;
 
         var thisMinute = new Date().getMinutes();
@@ -428,14 +427,23 @@ io.on("connection", socket => {
         }
 
         socket.emit('gameData', {"responseCode": "1", "remainingTime": remainingTime/1000, "isGameActive": isGameActive, "factor": factor } );
-
-        //io.sockets.emit('chatMessage', {[sessionManager.user.displayName]: data} );
     });
 
-    socket.on("hit", betAmount => {
-
-        socket.emit('game')
-        //io.sockets.emit('chatMessage', {[sessionManager.user.displayName]: data} );
+    socket.on("hit", data => {
+        try{
+            socket.request.session.reload(err=>{return socket.emit('joinGame', {"status": "succes"} );});
+            if(!isGameActive){return socket.emit("hit", {"status": "gameIsNotActive"}); }
+            let gain = socket.request.session.user.instantBetAmount * factor;
+            socket.request.session.user.instantBetAmount = 0;
+            socket.request.session.user.balance += gain; 
+            socket.request.session.user.isJoinedTheGame = false;
+            socket.request.session.reload(err=>{return socket.emit('hit', {"status": "failed"} );});
+            delete participantsOnThisSession[socket.client.id];
+            socket.emit('hit', {"status": "succes"} );
+        }
+        catch{
+            socket.emit('hit', {"status": "failed"} );
+        }
     });
 
     socket.on("joinGame", betAmount => {
@@ -447,7 +455,7 @@ io.on("connection", socket => {
 
             socket.request.session.user.instantBetAmount = parseInt(betAmount);
             socket.request.session.user.isJoinedTheGame = true;
-            socket.request.session.reload(err=>{return socket.emit('joinGame', {"status": "succes"} );});
+            socket.request.session.reload(err=>{return socket.emit('joinGame', {"status": "failed"} );});
             participantsOnThisSession[socket.client.id] = socket.request.session.user;
             socket.emit('joinGame', {"status": "succes"} );
         }
@@ -464,7 +472,7 @@ io.on("connection", socket => {
             socket.request.session.user.balance += socket.request.session.user.instantBetAmount;
             socket.request.session.user.instantBetAmount = 0;
             socket.request.session.user.isJoinedTheGame = false;
-            socket.request.session.reload(err=>{return socket.emit('leaveGame', {"status": "succes"} );});
+            socket.request.session.reload(err=>{return socket.emit('leaveGame', {"status": "failed"} );});
             delete participantsOnThisSession[socket.client.id];
             socket.emit('leaveGame', {"status": "succes"} );
         }
