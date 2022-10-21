@@ -456,6 +456,7 @@ io.on("connection", socket => {
 
     socket.on("joinGame", betAmount => {
         try{
+            betAmount = parseInt(betAmount);
             socket.request.session.reload(err=>{return socket.emit('joinGame', {"status": "succes"} );});
 
             if(isGameActive){return socket.emit("joinGame", {"status": "gameAlreadyStarted"}); }
