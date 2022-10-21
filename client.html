@@ -17,11 +17,11 @@
     <p>Online users count: </p>
     <p id="onlineUsersCount"></p>
 </body>
-<script src="http://skydivingserver.herokuapp.com/socket.io/socket.io.js"></script>
+<script src="https://skydivingserver.herokuapp.com/socket.io/socket.io.js"></script>
      <script>
         const mytext = document.getElementById("text");
 
-        const socket = io("skydivingserver.herokuapp.com");
+        const socket = io("https://skydivingserver.herokuapp.com");
 
 
         socket.on("test", data=>{
