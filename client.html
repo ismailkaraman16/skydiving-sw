@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+     
+</head>
+<body>
+     <p id="text">
+
+    </p>
+    <input type="text" placeholder="mesaj" id="message">
+    <button onclick="sendMessage()"> Gonder </button>
+    <br>
+    <input type="text" id="emitKey" placeholder="emit key">
+    <input type="text" id="emitData" placeholder="emit data">
+    <input type="button" onclick="emit(document.getElementById('emitKey').value, document.getElementById('emitData').value)" value="emit">
+
+    <p>Online users count: </p>
+    <p id="onlineUsersCount"></p>
+</body>
+<script src="http://localhost:7777/socket.io/socket.io.js"></script>
+     <script>
+        const mytext = document.getElementById("text");
+
+        const socket = io("http://localhost:7777");
+
+
+        socket.on("test", data=>{
+            alert(JSON.stringify(data));
+        });
+
+        socket.on("gameData", data=>{
+            console.log(data);
+        });
+
+        socket.on("history", data=>{
+            console.log(data);
+        });
+
+        socket.on("onlineUsersCount", data=>{
+            document.getElementById("onlineUsersCount").innerHTML = data;
+        });
+
+        socket.on("chatMessage", data=>{
+            mytext.innerHTML = mytext.innerHTML + "<br>" + Object.keys(data)[0] + ": "+ data[Object.keys(data)[0]] ;
+        });
+
+        socket.on("connectionInfo", data=>{
+            mytext.innerHTML = mytext.innerHTML + "<br> <label style='color: green;'>" + data + " </label>";
+        });
+
+        socket.on("disconnectionInfo", data=>{
+            mytext.innerHTML = mytext.innerHTML + "<br> <label style='color: red;'>" + data + " </label>";
+        });
+
+        function sendMessage(){
+            var message = document.getElementById("message");
+            socket.emit("chatMessage", message.value);
+        }
+        function emit(key, value){
+            socket.emit([key], value);
+        }
+     </script>
+</html>
