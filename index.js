@@ -474,7 +474,7 @@ io.on("connection", socket => {
     });
 
     socket.on("history", data => {
-        io.sockets.emit('history', factorHistory);
+        io.sockets.emit('history', {"result": factorHistory});
     });
 
     socket.on("chatMessage", data => {
