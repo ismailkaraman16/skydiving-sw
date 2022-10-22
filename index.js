@@ -163,14 +163,15 @@ io.on("connection", socket => {
         try{
             //socket.request.session.reload(err=>{return socket.emit('hit', {"status": "sessionReloadError"} );});
             if(!isGameActive){return socket.emit("hit", {"status": "gameIsNotActive"}); }
-            let gain = socket.request.session.user.instantBetAmount * factor;
-            socket.request.session.user.userHistory.push(socket.request.session.user.instantBetAmount+" | "+factor);
+            let saveFactor = factor;
+            let gain = socket.request.session.user.instantBetAmount * saveFactor;
+            socket.request.session.user.userHistory.push(socket.request.session.user.instantBetAmount+" | "+saveFactor);
             socket.request.session.user.instantBetAmount = 0;
             socket.request.session.user.balance += gain; 
             socket.request.session.user.isJoinedTheGame = false;
             socket.request.session.save();
             delete participantsOnThisSession[socket.client.id];
-            socket.emit('hit', {"status": "succes"} );
+            socket.emit('hit', {"status": "succes", "factorOnHit": saveFactor} );
         }
         catch{
             socket.emit('hit', {"status": "failed"} );
