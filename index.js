@@ -171,7 +171,7 @@ io.on("connection", socket => {
             socket.request.session.user.isJoinedTheGame = false;
             socket.request.session.save();
             delete participantsOnThisSession[socket.client.id];
-            socket.emit('hit', {"status": "succes", "factorOnHit": saveFactor} );
+            socket.emit('hit', {"status": "succes", "factorOnHit": saveFactor, "gain": gain} );
         }
         catch{
             socket.emit('hit', {"status": "failed"} );
