@@ -6,6 +6,8 @@ const crypto = require('node:crypto');
 const schedule = require('node-schedule');
 const socket = require("socket.io");
 
+//const algorithm = require("./algorithm");
+
 const app = express();
 
 const cors = require("cors");
@@ -28,7 +30,6 @@ const server = app.listen(process.env.PORT || "7777",function(){
 
 const io = socket(server);
 
-var sessionManager;
 var isGameActive = false;
 var factor = 1;
 var factorHistory = [];
@@ -36,9 +37,9 @@ var factorHistory = [];
 var participantsOnThisSession = {};
 var onlineUsers = {};
 
-
+/*
 async function calculateFactor(){
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, 200));
     if(isGameActive){
         var varE = 4; var varH = (Math.floor(Math.random() * (3 - 1 + 1) + 1));
         factor += 0.99*varE/(varE*varH*20);
@@ -46,25 +47,50 @@ async function calculateFactor(){
     }
 }
 
-app.get("/clearSessions", function(req,res){
-    req.session.destroy();
-    sessionManager = req.session;
-});
-
-
-const startGame = schedule.scheduleJob('00 * * * * *', function(){
-    isGameActive = true;
-    calculateFactor();
-});
-
-const stopGame = schedule.scheduleJob('15 * * * * *', function(){
+var stopGame = schedule.scheduleJob('15 * * * * *', function(){
     isGameActive = false;
     stopGameFunction(factor);
     factor = 1;
 });
 
-var stopGameFunction = async function(saveFactor){
+var startGame = schedule.scheduleJob('00 * * * * *', function(){
+    isGameActive = true;
+    let gameTime = (Math.random() * (15 - 2 + 1) + 2);
+    let highestFactor = (Math.random() * (15 - 2 + 1) + 2);
+    
+    console.log(gameTime);
+    calculateFactor();
+});
+*/
 
+var startedTime = Date.now();
+var gameTime = (Math.random() * (15 - 2 + 1) + 2);
+var highestFactor = (Math.random() * (parseInt(gameTime) - 0 + 1) + 0);
+var func = (Math.random() * (5 - 1.5 + 1) + 1.5);
+calculateFactor(startedTime, gameTime, highestFactor, func);
+
+async function calculateFactor(startedTime, gameTime, highestFactor, func){
+    let finishTime = startedTime + parseInt(gameTime*1000);
+    if( (Date.now() - finishTime) <= 0 ){6
+        isGameActive = true;
+
+        let x = (Date.now()-startedTime)/(gameTime*1000);
+        factor = 1 + (highestFactor * (x**func));
+        //console.log(factor);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        calculateFactor(startedTime, gameTime, highestFactor, func);
+    }
+    else{
+        isGameActive = false;
+        //console.log("bit amk artık");
+        stopGameFunction(factor, finishTime);
+        //factor = 1; //bu seçenek açılırsa oyun bittikten sonra, diğer oyun başlayana kadar factor = 1 datası gönderilir açılmazsa factor önceki oyunda maximum eriştiği değer gönderilir.
+    }
+}
+
+async function stopGameFunction(factor, finishedTime){
+    var saveFactor = factor;
+    factor = 1;
     if(factorHistory.length>19){
         var newHistory = [];
         for(let i = 0; i<factorHistory.length; i++){
@@ -78,13 +104,22 @@ var stopGameFunction = async function(saveFactor){
 
     if(Object.keys(participantsOnThisSession).length>0){
         for(let i = 0; i<Object.keys(participantsOnThisSession).length; i++){
-            onlineUsers[Object.keys(participantsOnThisSession)[i]].instantBetAmount = 0;
             onlineUsers[Object.keys(participantsOnThisSession)[i]].isJoinedTheGame = false;
             onlineUsers[Object.keys(participantsOnThisSession)[i]].userHistory.push(onlineUsers[Object.keys(participantsOnThisSession)[i]].instantBetAmount+" | 0");
+            onlineUsers[Object.keys(participantsOnThisSession)[i]].instantBetAmount = 0;
         }
     }
     
     participantsOnThisSession = {};
+
+    startedTime = finishedTime + 15000; //15 sn sonra yeni oyun
+    gameTime = (Math.random() * (15 - 2 + 1) + 2);
+    highestFactor = (Math.random() * (parseInt(gameTime) - 0 + 1) + 0);
+    func = (Math.random() * (5 - 1.5 + 1) + 1.5);
+
+    await new Promise(resolve => setTimeout(resolve, (startedTime - Date.now()) ));
+
+    calculateFactor(startedTime, gameTime, highestFactor, func);
 }
 
 app.get("/message", function(req, res){
@@ -102,7 +137,7 @@ io.use((socket, next) => {
         next();
     }
     else {
-        socket.request.session.user = {"displayName": "user", "balance": 1000, "instantBetAmount": 0, "isJoinedTheGame": false, "userHistory": ["0 | 0"] };
+        socket.request.session.user = {"displayName": "user", "balance": 1000, "instantBetAmount": 0, "isJoinedTheGame": false, "userHistory": [] };
         socket.request.session.save();
         onlineUsers[socket.client.id] = socket.request.session.user;
         next(); 
@@ -111,7 +146,7 @@ io.use((socket, next) => {
 
 io.on("connection", socket => {
     if(!socket.request.session.user){ console.log("notLoggedInBruhhhhhh"); return; }
-    if(socket.request.session.user.instantBetAmount>0){ let newUH = socket.request.session.user.userHistory.push(socket.request.session.user.instantBetAmount) + " | 0"; socket.request.session.user.userHistory = newUH; socket.request.session.user.instantBetAmount = 0; socket.request.session.user.isJoinedTheGame = false; socket.request.session.save(); }
+    if(socket.request.session.user.instantBetAmount>0){ socket.request.session.user.userHistory.push(socket.request.session.user.instantBetAmount + " | 0"); socket.request.session.user.instantBetAmount = 0; socket.request.session.user.isJoinedTheGame = false; socket.request.session.save(); }
 
     io.sockets.emit('connectionInfo', "Bir sihirdar bağlandı. Sihirdarın id'si: " + socket.client.id);
     io.sockets.emit('onlineUsersCount', (Object.keys(onlineUsers).length).toString());
@@ -132,22 +167,9 @@ io.on("connection", socket => {
     })
 
     socket.on("gameData", async data => {
-        console.log(socket.request.session);
+        //console.log(socket.request.session);
 
-        var remainingTime;
-
-        var thisMinute = new Date().getMinutes();
-        var thisHour = new Date().getHours();
-        var thisDay = new Date().getDate();
-        var thisMonth = new Date().getMonth();
-        var thisYear = new Date().getFullYear();
-
-        if((new Date() - new Date(thisYear, thisMonth, thisDay, thisHour, thisMinute, 15))>0){
-            remainingTime = new Date(thisYear, thisMonth, thisDay, thisHour, thisMinute+1, 00) - new Date();
-        }
-        else{
-            remainingTime = new Date(thisYear, thisMonth, thisDay, thisHour, thisMinute, 00) - new Date();
-        }
+        var remainingTime = (startedTime - Date.now());
 
         //socket.request.session.reload(err=>{return socket.emit('gameData', {"status": "sessionReloadError"} );});
         var _isJoinedTheGame = socket.request.session.user.isJoinedTheGame;
@@ -163,6 +185,7 @@ io.on("connection", socket => {
         try{
             //socket.request.session.reload(err=>{return socket.emit('hit', {"status": "sessionReloadError"} );});
             if(!isGameActive){return socket.emit("hit", {"status": "gameIsNotActive"}); }
+            if(factor == null){factor = 1}
             let saveFactor = factor;
             let gain = socket.request.session.user.instantBetAmount * saveFactor;
             socket.request.session.user.userHistory.push(socket.request.session.user.instantBetAmount+" | "+saveFactor);
