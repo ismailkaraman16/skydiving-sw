@@ -184,7 +184,9 @@ io.on("connection", socket => {
     socket.on("hit", data => {
         try{
             //socket.request.session.reload(err=>{return socket.emit('hit', {"status": "sessionReloadError"} );});
+            if(!socket.request.session.user.isJoinedTheGame){return socket.emit("hit", {"status": "notJoined"});}
             if(!isGameActive){return socket.emit("hit", {"status": "gameIsNotActive"}); }
+            //if(!socket.request.session.user.isJoinedTheGame){return socket.emit("hit", {"status": "notJoined"}); }
             if(factor == null){factor = 1}
             let saveFactor = factor;
             let gain = socket.request.session.user.instantBetAmount * saveFactor;
