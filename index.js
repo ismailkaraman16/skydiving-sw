@@ -112,7 +112,7 @@ async function stopGameFunction(factor, finishedTime){
     
     participantsOnThisSession = {};
 
-    startedTime = finishedTime + 15000; //15 sn sonra yeni oyun
+    startedTime = finishedTime + 20000; //15 sn sonra yeni oyun
     gameTime = (Math.random() * (15 - 2 + 1) + 2);
     highestFactor = (Math.random() * (parseInt(gameTime) - 0 + 1) + 0);
     func = (Math.random() * (5 - 1.5 + 1) + 1.5);
