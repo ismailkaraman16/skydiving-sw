@@ -7,12 +7,21 @@
      <p id="text">
 
     </p>
+    <p id="rem"></p>
+    <p id="factor"></p>
+    <p id="balance"></p>
     <input type="text" placeholder="mesaj" id="message">
     <button onclick="sendMessage()"> Gonder </button>
     <br>
     <input type="text" id="emitKey" placeholder="emit key">
     <input type="text" id="emitData" placeholder="emit data">
     <input type="button" onclick="emit(document.getElementById('emitKey').value, document.getElementById('emitData').value)" value="emit">
+
+    <br>
+    <input type="button" onclick="join()" value="Join"><br>
+    <input type="button" onclick="leave()" value="Leave"><br>
+    <input type="button" onclick="hit()" value="Hit"><br>
+    <input type="button" onclick="fifty()" value="Fifty Cashout">
 
     <p>Online users count: </p>
     <p id="onlineUsersCount"></p>
@@ -31,6 +40,23 @@
             alert(JSON.stringify(data));
         });
         socket.on("gameData", data=>{
+            console.log(data);
+            document.getElementById("factor").innerHTML = data.factor;
+            document.getElementById("balance").innerHTML = data.balance;
+            document.getElementById("rem").innerHTML = data.remainingTime;
+
+        });
+
+        socket.on("joinGame", data=>{
+            console.log(data);
+        });
+        socket.on("leaveGame", data=>{
+            console.log(data);
+        });
+        socket.on("hit", data=>{
+            console.log(data);
+        });
+        socket.on("fiftyCashout", data=>{
             console.log(data);
         });
 
@@ -61,5 +87,25 @@
         function emit(key, value){
             socket.emit([key], value);
         }
+
+        function gameData(){
+            console.clear();
+            socket.emit("gameData", "x");
+        }
+
+        function join(){
+            socket.emit("joinGame", "100");
+        }
+        function leave(){
+            socket.emit("leaveGame", "x");
+        }
+        function hit(){
+            socket.emit("hit", "x");
+        }
+        function fifty(){
+            socket.emit("fiftyCashout", "x");
+        }
+        
+        setInterval(gameData, 2000);
      </script>
 </html>

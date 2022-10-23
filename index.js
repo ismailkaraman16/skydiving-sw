@@ -203,6 +203,7 @@ io.on("connection", socket => {
         }
     });
 
+    
     socket.on("fiftyCashout", data => {
         try{
             //if(socket.request.session.user.isFiftyCashouted){return socket.emit("hit", {"status": "alreadyCashouted"});}
@@ -215,7 +216,6 @@ io.on("connection", socket => {
             socket.request.session.user.instantBetAmount = (socket.request.session.user.instantBetAmount/2);
             socket.request.session.user.balance += gain; 
             socket.request.session.save();
-            delete participantsOnThisSession[socket.client.id];
             socket.emit('fiftyCashout', {"status": "succes", "factorOnHit": saveFactor.toString(), "gain": gain.toString()} );
         }
         catch{
@@ -226,14 +226,17 @@ io.on("connection", socket => {
     socket.on("joinGame", betAmount => {
         try{
             betAmount = parseInt(betAmount);
+            if(betAmount <= 0 ||  isNaN(betAmount)){
+                return socket.emit("joinGame", {"status": "invalidBetAmount"});
+            }
             //socket.request.session.reload(err=>{return socket.emit('joinGame', {"status": "sessionReloadError"} );});
 
             if(isGameActive){return socket.emit("joinGame", {"status": "gameAlreadyStarted"}); }
             if(betAmount > socket.request.session.user.balance){return socket.emit("joinGame", {"status": "balance<betamount"}); }
             if(socket.request.session.user.isJoinedTheGame){return socket.emit("joinGame", {"status": "alreadyJoinedTheGame"}); }
 
-            socket.request.session.user.instantBetAmount = parseInt(betAmount);
-            socket.request.session.user.balance -= parseInt(betAmount);
+            socket.request.session.user.instantBetAmount = betAmount;
+            socket.request.session.user.balance -= betAmount;
             socket.request.session.user.isJoinedTheGame = true;
             socket.request.session.save();
             participantsOnThisSession[socket.client.id] = socket.request.session.user;
