@@ -240,6 +240,7 @@ io.on("connection", socket => {
             socket.emit('leaveGame', {"status": "failed"} );
         }
     });
+    //bruh
 
     socket.on("history", data => {
         io.sockets.emit('history', {"result": factorHistory.toString()});
