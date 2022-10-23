@@ -137,7 +137,7 @@ io.use((socket, next) => {
         next();
     }
     else {
-        socket.request.session.user = {"displayName": "user", "balance": 1000, "instantBetAmount": 0, "isJoinedTheGame": false, "userHistory": [] };
+        socket.request.session.user = {"displayName": "user", "balance": 1000, "instantBetAmount": 0, /*"isFiftyCashouted": false,*/ "isJoinedTheGame": false, "userHistory": [] };
         socket.request.session.save();
         onlineUsers[socket.client.id] = socket.request.session.user;
         next(); 
@@ -203,6 +203,26 @@ io.on("connection", socket => {
         }
     });
 
+    socket.on("fiftyCashout", data => {
+        try{
+            //if(socket.request.session.user.isFiftyCashouted){return socket.emit("hit", {"status": "alreadyCashouted"});}
+            if(!socket.request.session.user.isJoinedTheGame){return socket.emit("fiftyCashout", {"status": "notJoined"});}
+            if(!isGameActive){return socket.emit("fiftyCashout", {"status": "gameIsNotActive"}); }
+            if(factor == null){factor = 1}
+            let saveFactor = factor;
+            let gain = (socket.request.session.user.instantBetAmount * saveFactor)/2;
+            socket.request.session.user.userHistory.push(socket.request.session.user.instantBetAmount+" | "+saveFactor);
+            socket.request.session.user.instantBetAmount = (socket.request.session.user.instantBetAmount/2);
+            socket.request.session.user.balance += gain; 
+            socket.request.session.save();
+            delete participantsOnThisSession[socket.client.id];
+            socket.emit('fiftyCashout', {"status": "succes", "factorOnHit": saveFactor.toString(), "gain": gain.toString()} );
+        }
+        catch{
+            socket.emit('fiftyCashout', {"status": "failed"} );
+        }
+    });
+
     socket.on("joinGame", betAmount => {
         try{
             betAmount = parseInt(betAmount);
@@ -240,7 +260,7 @@ io.on("connection", socket => {
             socket.emit('leaveGame', {"status": "failed"} );
         }
     });
-    
+
     socket.on("history", data => {
         io.sockets.emit('history', {"result": factorHistory.toString()});
     });
