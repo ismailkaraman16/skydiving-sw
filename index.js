@@ -178,7 +178,7 @@ io.on("connection", socket => {
         var _userHistory = socket.request.session.user.userHistory;
         var _displayName = socket.request.session.user.displayName
 
-        socket.emit('gameData', {"responseCode": "1", "remainingTime": (remainingTime/1000).toString(), "isGameActive": isGameActive, "factor": factor.toString(), "isJoinedTheGame": _isJoinedTheGame, "balance": _balance.toString(), "instantBetAmount": _instantBetAmount.toString(), "displayName": _displayName, "userHistory": _userHistory} );
+        socket.emit('gameData', {"responseCode": "1", "remainingTime": (remainingTime/1000).toString(), "isGameActive": isGameActive, "factor": factor.toString(), "isJoinedTheGame": _isJoinedTheGame, "balance": _balance.toString(), "instantBetAmount": _instantBetAmount.toString(), "displayName": _displayName, "userHistory": _userHistory.toString()} );
     });
 
     socket.on("hit", data => {
@@ -242,7 +242,7 @@ io.on("connection", socket => {
     });
 
     socket.on("history", data => {
-        io.sockets.emit('history', {"result": factorHistory});
+        io.sockets.emit('history', {"result": factorHistory.toString()});
     });
 
     socket.on("chatMessage", data => {
