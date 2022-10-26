@@ -125,6 +125,10 @@ app.get("/message", function(req, res){
     res.sendFile(path.join(__dirname, "client.html"));
 });
 
+app.get("/pLogs", function(req, res){
+    res.sendFile(path.join(__dirname, "participantsLogs.txt"));
+});
+
 //websocket
 
 const wrap = middleware => (socket, next) => middleware(socket.request, {}, next);
