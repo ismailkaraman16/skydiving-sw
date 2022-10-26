@@ -35,8 +35,8 @@ const sessionMiddleware = session({
 
 app.use(sessionMiddleware);
 
-const server = app.listen(80,function(){
-    console.log("Server started on port " + 80);
+const server = app.listen(process.env.PORT || 7777, function(){
+    console.log("Server started on port " + 7777);
 });
 
 const io = socket(server);
