@@ -1,5 +1,5 @@
 const crypto = require('crypto')
-const Big = require('big.js'); // npm install big.js
+const Big = require('big.js');
 
 Big.strict = true;
 Big.RM = Big.roundDown;
@@ -7,10 +7,8 @@ Big.RM = Big.roundDown;
 const max_stop = Big('5000.0');
 const house_factor = 25n;
 
-
-function generate_stop_value() {
+function generate_stop_value(maxint) {
     const randint = crypto.randomBytes(8).readBigUInt64BE();
-    const maxint = 2n**64n - 1n;
 
     const randint_dec = Big(randint.toString());
     const maxint_dec = Big(maxint.toString());
@@ -23,7 +21,13 @@ function generate_stop_value() {
     if (result.gt(max_stop))
         return generate_stop_value();
 
-    return result.toFixed(2).toString();
+    return result.toFixed(2);
 }
+/*
+var int = 5n**32n - 564n;
+var int2 = 23283064365386962890061;
 
-exports.generate_stop_value = generate_stop_value;
+console.log(int);
+console.log(generate_stop_value(int));
+*/
+exports.calc = generate_stop_value;

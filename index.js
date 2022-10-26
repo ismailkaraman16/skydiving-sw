@@ -5,9 +5,9 @@ const path = require("path");
 const crypto = require('node:crypto');
 const socket = require("socket.io");
 const fs = require("fs");
+const Big = require("big.js");
 
 const getTopVal = require("./getTopValue");
-//const algorithm = require("./algorithm");
 
 const app = express();
 
@@ -16,16 +16,13 @@ app.use(cors());
 
 app.enable('trust proxy');
 app.use(function(request, response, next) {
-
     if (process.env.NODE_ENV != 'development' && !request.secure) {
        return response.redirect("https://" + request.headers.host + request.url);
     }
-
     next();
 });
 
-app.use("/game/skydiving/", express.static(path.join(__dirname, "game/skydiving/")));
-app.use("/game/sky/", express.static(path.join(__dirname, "game/sky/")));
+app.use("/game/", express.static(path.join(__dirname, "game/")));
 
 const sessionMiddleware = session({
     secret: 'Yp3s6v9y$B&E)H@MbQeThWmZq4t7w!z%', 
@@ -34,6 +31,8 @@ const sessionMiddleware = session({
 });
 
 app.use(sessionMiddleware);
+
+console.log(process.env.PORT);
 
 const server = app.listen(process.env.PORT || 7777, function(){
     console.log("Server started on port " + 7777);
@@ -50,7 +49,8 @@ var logs = {"participantsCount": 0};
 var onlineUsers = {};
 
 var startedTime = Date.now();
-var highestFactor = getTopVal.generate_stop_value();
+var maxInt = 5n**32n - 564n;
+var highestFactor = getTopVal.calc(maxInt);
 var gameTime = (Math.random() * (highestFactor - 2 + 1) + 2);
 var func = (Math.random() * (5 - 1.5 + 1) + 1.5);
 calculateFactor(startedTime, gameTime, highestFactor, func);
@@ -105,7 +105,7 @@ async function stopGameFunction(factor, finishedTime){
     participantsOnThisSession = {};
 
     startedTime = finishedTime + 20000; //15 sn sonra yeni oyun
-    highestFactor = getTopVal.generate_stop_value();
+    highestFactor = getTopVal.calc(maxInt);
     gameTime = (Math.random() * (highestFactor - 2 + 1) + 2);
     func = (Math.random() * (5 - 1.5 + 1) + 1.5);
 

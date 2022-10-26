@@ -26,11 +26,11 @@
     <p>Online users count: </p>
     <p id="onlineUsersCount"></p>
 </body>
-<script src="https://raman.fun/socket.io/socket.io.js"></script>
+<script src="http://localhost:7777/socket.io/socket.io.js"></script>
      <script>
         const mytext = document.getElementById("text");
 
-        const socket = io("https://raman.fun");
+        const socket = io("http://raman.fun");
 
 
         socket.on("test", data=>{
