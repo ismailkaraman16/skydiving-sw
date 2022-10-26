@@ -3,15 +3,26 @@ const session = require("express-session");
 const bodyParser = require("body-parser");
 const path = require("path");
 const crypto = require('node:crypto');
-const schedule = require('node-schedule');
 const socket = require("socket.io");
+const fs = require("fs");
 
+const getTopVal = require("./getTopValue");
 //const algorithm = require("./algorithm");
 
 const app = express();
 
 const cors = require("cors");
 app.use(cors());
+
+app.enable('trust proxy');
+app.use(function(request, response, next) {
+
+    if (process.env.NODE_ENV != 'development' && !request.secure) {
+       return response.redirect("https://" + request.headers.host + request.url);
+    }
+
+    next();
+});
 
 app.use("/game/skydiving/", express.static(path.join(__dirname, "game/skydiving/")));
 app.use("/game/sky/", express.static(path.join(__dirname, "game/sky/")));
@@ -24,8 +35,8 @@ const sessionMiddleware = session({
 
 app.use(sessionMiddleware);
 
-const server = app.listen(process.env.PORT || "7777",function(){
-    console.log("Server started on port 7777");
+const server = app.listen(80,function(){
+    console.log("Server started on port " + 80);
 });
 
 const io = socket(server);
@@ -35,37 +46,12 @@ var factor = 1;
 var factorHistory = [];
 
 var participantsOnThisSession = {};
+var logs = {"participantsCount": 0};
 var onlineUsers = {};
 
-/*
-async function calculateFactor(){
-    await new Promise(resolve => setTimeout(resolve, 200));
-    if(isGameActive){
-        var varE = 4; var varH = (Math.floor(Math.random() * (3 - 1 + 1) + 1));
-        factor += 0.99*varE/(varE*varH*20);
-        calculateFactor();
-    }
-}
-
-var stopGame = schedule.scheduleJob('15 * * * * *', function(){
-    isGameActive = false;
-    stopGameFunction(factor);
-    factor = 1;
-});
-
-var startGame = schedule.scheduleJob('00 * * * * *', function(){
-    isGameActive = true;
-    let gameTime = (Math.random() * (15 - 2 + 1) + 2);
-    let highestFactor = (Math.random() * (15 - 2 + 1) + 2);
-    
-    console.log(gameTime);
-    calculateFactor();
-});
-*/
-
 var startedTime = Date.now();
-var gameTime = (Math.random() * (15 - 2 + 1) + 2);
-var highestFactor = (Math.random() * (parseInt(gameTime) - 0 + 1) + 0);
+var highestFactor = getTopVal.generate_stop_value();
+var gameTime = (Math.random() * (highestFactor - 2 + 1) + 2);
 var func = (Math.random() * (5 - 1.5 + 1) + 1.5);
 calculateFactor(startedTime, gameTime, highestFactor, func);
 
@@ -82,7 +68,6 @@ async function calculateFactor(startedTime, gameTime, highestFactor, func){
     }
     else{
         isGameActive = false;
-        //console.log("bit amk artık");
         stopGameFunction(factor, finishTime);
         //factor = 1; //bu seçenek açılırsa oyun bittikten sonra, diğer oyun başlayana kadar factor = 1 datası gönderilir açılmazsa factor önceki oyunda maximum eriştiği değer gönderilir.
     }
@@ -91,7 +76,7 @@ async function calculateFactor(startedTime, gameTime, highestFactor, func){
 async function stopGameFunction(factor, finishedTime){
     var saveFactor = factor;
     factor = 1;
-    if(factorHistory.length>19){
+    if(factorHistory.length>18){
         var newHistory = [];
         for(let i = 0; i<factorHistory.length; i++){
             if(i!=0){
@@ -109,17 +94,31 @@ async function stopGameFunction(factor, finishedTime){
             onlineUsers[Object.keys(participantsOnThisSession)[i]].instantBetAmount = 0;
         }
     }
+
+    let stringifiedLogs = JSON.stringify(logs);
+    addLog("participantsLogs.txt", new Date() + " - " + stringifiedLogs);
+    addLog("factorHistory.txt", new Date() + " - " + saveFactor);
+    //io.sockets.emit('chatMessage', {"system": "gameFinished"} );
+    
+    logs = {"participantsCount": 0};
     
     participantsOnThisSession = {};
 
     startedTime = finishedTime + 20000; //15 sn sonra yeni oyun
-    gameTime = (Math.random() * (15 - 2 + 1) + 2);
-    highestFactor = (Math.random() * (parseInt(gameTime) - 0 + 1) + 0);
+    highestFactor = getTopVal.generate_stop_value();
+    gameTime = (Math.random() * (highestFactor - 2 + 1) + 2);
     func = (Math.random() * (5 - 1.5 + 1) + 1.5);
 
     await new Promise(resolve => setTimeout(resolve, (startedTime - Date.now()) ));
 
     calculateFactor(startedTime, gameTime, highestFactor, func);
+}
+
+function addLog(filename, data){
+    //io.sockets.emit('chatMessage', {"system": "add log" + data} );
+    fs.appendFile(filename, "\n"+data, function (err) {
+        if (err) {console.log(err); } 
+    });
 }
 
 app.get("/message", function(req, res){
@@ -167,8 +166,6 @@ io.on("connection", socket => {
     })
 
     socket.on("gameData", async data => {
-        //console.log(socket.request.session);
-
         var remainingTime = (startedTime - Date.now());
 
         //socket.request.session.reload(err=>{return socket.emit('gameData', {"status": "sessionReloadError"} );});
@@ -196,6 +193,7 @@ io.on("connection", socket => {
             socket.request.session.user.isJoinedTheGame = false;
             socket.request.session.save();
             delete participantsOnThisSession[socket.client.id];
+            logs[socket.client.id].checkOutFactor = saveFactor;
             socket.emit('hit', {"status": "succes", "factorOnHit": saveFactor.toString(), "gain": gain.toString()} );
         }
         catch{
@@ -240,6 +238,8 @@ io.on("connection", socket => {
             socket.request.session.user.isJoinedTheGame = true;
             socket.request.session.save();
             participantsOnThisSession[socket.client.id] = socket.request.session.user;
+            logs.participantsCount += 1;
+            logs[socket.client.id] = {"betAmount": betAmount};
             socket.emit('joinGame', {"status": "succes"} );
         }
         catch{
@@ -257,6 +257,9 @@ io.on("connection", socket => {
             socket.request.session.user.isJoinedTheGame = false;
             socket.request.session.save();
             delete participantsOnThisSession[socket.client.id];
+            logs.participantsCount += -1;
+            delete logs[socket.client.id];
+
             socket.emit('leaveGame', {"status": "succes"} );
         }
         catch{
@@ -265,7 +268,7 @@ io.on("connection", socket => {
     });
 
     socket.on("history", data => {
-        io.sockets.emit('history', {"result": factorHistory.toString()});
+        socket.emit('history', {"result": factorHistory.toString()});
     });
 
     socket.on("chatMessage", data => {

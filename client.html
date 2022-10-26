@@ -26,17 +26,20 @@
     <p>Online users count: </p>
     <p id="onlineUsersCount"></p>
 </body>
-<script src="https://skydivingserver.herokuapp.com/socket.io/socket.io.js"></script>
+<script src="https://raman.fun/socket.io/socket.io.js"></script>
      <script>
         const mytext = document.getElementById("text");
 
-        const socket = io("https://skydivingserver.herokuapp.com");
+        const socket = io("https://raman.fun");
 
 
         socket.on("test", data=>{
             alert(JSON.stringify(data));
         });
         socket.on("ses", data=>{
+            alert(JSON.stringify(data));
+        });
+        socket.on("history", data=>{
             alert(JSON.stringify(data));
         });
         socket.on("gameData", data=>{
@@ -106,6 +109,6 @@
             socket.emit("fiftyCashout", "x");
         }
         
-        setInterval(gameData, 2000);
+        setInterval(gameData, 100);
      </script>
 </html>
