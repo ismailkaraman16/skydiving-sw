@@ -127,6 +127,7 @@ app.get("/message", function(req, res){
 
 app.get("/pLogs", function(req, res){
     res.sendFile(path.join(__dirname, "participantsLogs.txt"));
+    /* */
 });
 
 //websocket
